@@ -1,0 +1,16 @@
+{
+  "name": "@uhef/trello-analysis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "analysis": "ts-node src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-node": "6.1.1",
+    "typescript": "2.9.2"
+  }
+}
