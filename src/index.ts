@@ -3,7 +3,6 @@ import * as rp from 'request-promise'
 import * as fs from 'fs'
 import { create } from 'domain';
 
-const DAISY_LABEL_ID = '59c20c761314a33999b3ac50'
 const DONE_LIST_ID = '5a97b723aefe03c3790e729c'
 const STAGING_LIST_ID = '5a717a54c4a1139fcc118c9b'
 const PRODUCTION_LIST_ID = '59c20c8962f975c2f205e9b1'
@@ -14,16 +13,23 @@ interface TrelloCredentials {
   token: string
 }
 
+interface TrelloLabel {
+  id: string
+  name: string
+}
+
 async function getData(): Promise<string> {
   const fileContents = fs.readFileSync('data/u3tO7g00.json', 'utf-8')
   const json = JSON.parse(fileContents)
   return json.name
 }
 
-function daisyCard(card: any): any {
-  return card.labels.some((label: any) => {
-    return label.id === DAISY_LABEL_ID
-  })
+function createCardFilter(labelId: string) {
+  return (card: any): any => {
+    return card.labels.some((label: any) => {
+      return label.id === labelId
+    })
+  }
 }
 
 function isString(input: string | undefined): input is string {
@@ -43,6 +49,16 @@ function getCredentials(): TrelloCredentials {
     key,
     token
   }
+}
+
+async function getLabel(credentials: TrelloCredentials, labelName: string): Promise<TrelloLabel> {
+  const getCardsOptions: rp.OptionsWithUrl = {
+    url: `https://api.trello.com/1/boards/59c20c76cc6e831df3664603/labels/?key=${credentials.key}&token=${credentials.token}`,
+    method: 'GET',
+    json: true
+  }
+  const labels = await rp(getCardsOptions)
+  return labels.find((label: TrelloLabel) => label.name === labelName)
 }
 
 async function getCards(credentials: TrelloCredentials): Promise<Array<object>> {
@@ -182,8 +198,9 @@ function summary(cards: any): any {
 
 async function main() {
   const credentials = getCredentials()
+  const label = await getLabel(credentials, 'Daisy Integration v1')
   const cards = await getCards(credentials)
-  const filteredCards = cards.filter(daisyCard)
+  const filteredCards = cards.filter(createCardFilter(label.id))
   const actionCards = await getActions(credentials, filteredCards)
   const reportCards = addCycleTime(addCompletion(addStarted(addCreation(actionCards))))
   report(reportCards)
