@@ -36,6 +36,13 @@ function isString(input: string | undefined): input is string {
   return typeof input === 'string'
 }
 
+function getLabelName(): string {
+  if (process.argv.length < 3) {
+    throw new Error(`Label name not provided.`)
+  }
+  return process.argv[2]
+}
+
 function getCredentials(): TrelloCredentials {
   const key = process.env.TRELLO_KEY
   const token = process.env.TRELLO_TOKEN
@@ -182,12 +189,13 @@ function meanCreateToComplete(cards: any): number {
   return summedCycleTime / amount
 }
 
-function summary(cards: any): any {
+function summary(labelName: string, cards: any): any {
   const amount = cards.length
   const minCreationTime = cards.map((card: any) => card.created).reduce(min, cards[0].created)
   const amountOfTasksOnStartDate = cards.map((card: any) => card.created).filter((created: moment.Moment) => moment.duration(created.diff(minCreationTime)).days() === 0).length
   console.log(`SUMMARY`)
   console.log(`=======\n`)
+  console.log(`Analysed label: ${labelName}`)
   console.log(`Total number of tasks: ${cards.length}`)
   console.log(`Mean cycle time (creation to completion): ${meanCreateToComplete(cards)}`)
   console.log(`Mean cycle time (creation to start): ${meanCreateToStart(cards)}`)
@@ -197,14 +205,15 @@ function summary(cards: any): any {
 }
 
 async function main() {
+  const labelName = getLabelName()
   const credentials = getCredentials()
-  const label = await getLabel(credentials, 'Daisy Integration v1')
+  const label = await getLabel(credentials, labelName)
   const cards = await getCards(credentials)
   const filteredCards = cards.filter(createCardFilter(label.id))
   const actionCards = await getActions(credentials, filteredCards)
   const reportCards = addCycleTime(addCompletion(addStarted(addCreation(actionCards))))
   report(reportCards)
-  summary(reportCards)
+  summary(labelName, reportCards)
 }
 
 main()
