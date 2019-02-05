@@ -70,7 +70,7 @@ async function getLabel(credentials: TrelloCredentials, labelName: string): Prom
 
 async function getCards(credentials: TrelloCredentials): Promise<Array<object>> {
   const getCardsOptions: rp.OptionsWithUrl = {
-    url: `https://api.trello.com/1/boards/59c20c76cc6e831df3664603/cards/?key=${credentials.key}&token=${credentials.token}`,
+    url: `https://api.trello.com/1/boards/59c20c76cc6e831df3664603/cards/all/?key=${credentials.key}&token=${credentials.token}`,
     method: 'GET',
     json: true
   }
