@@ -126,7 +126,7 @@ function addStarted(cards: Array<object>): Array<object> {
 
 function addCompletion(cards: Array<object>): Array<object> {
   return cards.map((card: any) => {
-    const cardActions = card.actions.filter((action: any) => action.type === 'updateCard')
+    const cardActions = card.actions.filter((action: any) => action.type === 'updateCard').sort((a1: any, a2: any) => moment(a1.date).diff(moment(a2.date)))
     const completionAction = cardActions.find((action: any) => {
       return action.data.listAfter && (
         action.data.listAfter.id === STAGING_LIST_ID ||
