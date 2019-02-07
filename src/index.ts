@@ -1,7 +1,6 @@
 import * as moment from 'moment'
 import * as rp from 'request-promise'
 import * as fs from 'fs'
-import { create } from 'domain';
 
 const DONE_LIST_ID = '5a97b723aefe03c3790e729c'
 const STAGING_LIST_ID = '5a717a54c4a1139fcc118c9b'
@@ -16,12 +15,6 @@ interface TrelloCredentials {
 interface TrelloLabel {
   id: string
   name: string
-}
-
-async function getData(): Promise<string> {
-  const fileContents = fs.readFileSync('data/u3tO7g00.json', 'utf-8')
-  const json = JSON.parse(fileContents)
-  return json.name
 }
 
 function createCardFilter(labelId: string) {
@@ -158,6 +151,7 @@ function addCycleTime(cards: Array<object>): Array<object> {
 function report(cards: any): any {
   cards.forEach((card: any) => {
     console.log(card.name)
+    console.log(card.id)
     console.log(`Card created: ${card.created.format('D.M.YYYY')}`)
     console.log(`Card started: ${card.started ? card.started.format('D.M.YYYY') : 'not started'}`)
     console.log(`Card completed: ${card.completed ? card.completed.format('D.M.YYYY') : 'uncompleted'}`)
@@ -170,6 +164,7 @@ function report(cards: any): any {
 
 const sum = (acc: number, value: number) => acc + value
 const min = (acc: moment.Moment, value: moment.Moment) => acc.isBefore(value) ? acc : value
+const max = (acc: moment.Moment, value: moment.Moment) => acc.isAfter(value) ? acc : value
 
 function meanCreateToStart(cards: any): number {
   const amount = cards.length
@@ -192,7 +187,13 @@ function meanCreateToComplete(cards: any): number {
 function summary(labelName: string, cards: any): any {
   const amount = cards.length
   const minCreationTime = cards.map((card: any) => card.created).reduce(min, cards[0].created)
+  const startTimes = cards.map((card: any) => card.started).filter((a: any) => a)
+  const minStartTime = startTimes.reduce(min, startTimes[0])
+  const completionTimes = cards.map((card: any) => card.completed).filter((a: any) => a)
+  const maxCompletionTime = completionTimes.reduce(max, completionTimes[0])
+  const featureStartToComplete = moment.duration(maxCompletionTime.diff(minStartTime)).asDays()
   const amountOfTasksOnStartDate = cards.map((card: any) => card.created).filter((created: moment.Moment) => moment.duration(created.diff(minCreationTime)).days() === 0).length
+  const amountOfCompletedTasks = cards.map((card: any) => card.completed).filter((a: any) => a).length
   console.log(`SUMMARY`)
   console.log(`=======\n`)
   console.log(`Analysed label: ${labelName}`)
@@ -200,7 +201,12 @@ function summary(labelName: string, cards: any): any {
   console.log(`Mean cycle time (creation to completion): ${meanCreateToComplete(cards)}`)
   console.log(`Mean cycle time (creation to start): ${meanCreateToStart(cards)}`)
   console.log(`Mean cycle time (start to completion): ${meanStartToComplete(cards)}`)
-  console.log(`Feature started: ${minCreationTime}`)
+  console.log(`Feature defined: ${minCreationTime}`)
+  console.log(`Feature started: ${minStartTime}`)
+  console.log(`Feature completed: ${maxCompletionTime}`)
+  console.log(`Feature start to completion: ${featureStartToComplete}`)
+  console.log(`Amount of completed tasks: ${amountOfCompletedTasks}`)
+  console.log(`Feature cycle time divided by completed tasks: ${featureStartToComplete / amountOfCompletedTasks}`)
   console.log(`Percent of tasks defined on start date: ${((amountOfTasksOnStartDate / amount) * 100).toFixed(2)}%`)
 }
 

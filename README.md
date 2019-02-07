@@ -13,3 +13,7 @@ Where `access_key` is the key to gain access to the associated trello board data
 
 `label_name` is the name of the label to analyse.
 
+TODO
+----
+
+Should handle case where task is dragged to "done" column but returned to "in progress" / "todo" afterwards.
